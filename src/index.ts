@@ -156,12 +156,3 @@ app.listen(PORT, () => {
   console.log(`Sequential Thinking MCP Server running on port ${PORT}`);
   console.log(`SSE endpoint: http://localhost:${PORT}/sse`);
 });
-```
-
-### .gitignore
-```
-node_modules/
-dist/
-.env
-*.log
-.DS_Store
