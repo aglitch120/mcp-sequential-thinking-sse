@@ -13,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Sequential Thinking Server Implementation
 class SequentialThinkingServer {
   private server: Server;
   private thinkingHistory: Array<{
@@ -39,7 +38,6 @@ class SequentialThinkingServer {
   }
 
   private setupHandlers() {
-    // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
@@ -65,7 +63,6 @@ class SequentialThinkingServer {
       ],
     }));
 
-    // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (request.params.name === "sequential_thinking") {
         const { thought, nextMove } = request.params.arguments as {
@@ -73,7 +70,6 @@ class SequentialThinkingServer {
           nextMove: string;
         };
 
-        // Store thinking step
         this.thinkingHistory.push({
           timestamp: new Date(),
           thought,
@@ -108,36 +104,34 @@ class SequentialThinkingServer {
   }
 }
 
-// Create server instance
 const sequentialServer = new SequentialThinkingServer();
 const server = sequentialServer.getServer();
 
-// SSE endpoint
 app.get("/sse", async (req: Request, res: Response) => {
   console.log("New SSE connection established");
+  
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
   
   const transport = new SSEServerTransport("/message", res);
   await server.connect(transport);
   
-  // Handle client disconnect
   req.on("close", () => {
     console.log("SSE connection closed");
+    transport.close();
   });
 });
 
-// Message endpoint for client-to-server messages
-app.post("/message", async (req: Request, res: Response) => {
+app.post("/message", express.text({ type: "*/*" }), async (req: Request, res: Response) => {
   console.log("Received message:", req.body);
-  // SSE transport handles the message
-  res.sendStatus(200);
+  res.status(200).end();
 });
 
-// Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok", service: "mcp-sequential-thinking-sse" });
 });
 
-// Root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.json({
     service: "MCP Sequential Thinking Server",
